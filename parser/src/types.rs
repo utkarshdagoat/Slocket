@@ -129,6 +129,10 @@ impl PrimitiveSolidityType {
         let bracket_indx = function_declaration.find('(').unwrap();
         let closing_indx = function_declaration.find(')').unwrap();
 
+        if bracket_indx + 1 == closing_indx {
+            return input_args;
+        }
+
         let input_args_string = &function_declaration[(bracket_indx + 1)..closing_indx];
         for words in input_args_string.split(',') {
             let word: Vec<&str> = words.split(' ').filter(|&word| word != "").collect();

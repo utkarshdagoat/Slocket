@@ -5,7 +5,7 @@ use std::{
     fs::{self, File, OpenOptions},
     hash::{DefaultHasher, Hash, Hasher},
     io::{Read, Write},
-    path::Path,
+    path::Path, time::{SystemTime, UNIX_EPOCH},
 };
 mod types;
 mod utils;
@@ -211,34 +211,46 @@ impl ContractGenerator {
         &self,
         function: String,
         lambda_name: String,
-    ) -> Result<String, Box<dyn Error>> {
+    ) -> Result<(String, String), Box<dyn Error>> {
+        // Generate timestamp
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)?
+            .as_secs();
+        
+        // Create hash from lambda name and timestamp
         let mut hasher = DefaultHasher::new();
         lambda_name.hash(&mut hasher);
+        timestamp.hash(&mut hasher);
         let hash = hasher.finish();
-
-        let final_path = format!("output/{}", hash);
+        
+        // Create unique filename with timestamp
+        let filename = format!("lambda_{}_{}", timestamp, hash);
+        let final_path = format!("output/{}", filename);
+        
+        // Copy template and process file
         copy_dir_recursively(Path::new("template"), Path::new(&final_path))?;
         let file_path = lambda_file(&final_path);
         let mut file = File::open(file_path.clone())?;
         let mut content = String::new();
         file.read_to_string(&mut content)?;
+        
+        // Replace placeholders
         let comment = "//lambda_here";
         let new_content = content.replace(comment, &function);
-
         let state_comment = "//states_here";
         let state_content = self.global_state_string();
         let new_content = new_content.replace(state_comment, &state_content);
-
+        
+        // Write to file
         fs::write(&file_path, new_content)?;
-        Ok(state_content)
+        
+        // Return both state content and filename
+        Ok((state_content, filename))
     }
 
-    pub fn write_apg(&self, lambda_name: String) -> Result<(), Box<dyn Error>> {
-        let mut hasher = DefaultHasher::new();
-        lambda_name.hash(&mut hasher);
-        let hash = hasher.finish();
-
-        let final_path = format!("output/{}", hash);
+    pub fn write_apg(&self, dir: String) -> Result<(), Box<dyn Error>> {
+        let final_path = format!("output/{}", dir);
+        println!("final_path: {:?}", final_path);
         let file_path = lambda_apg_file(&final_path);
         let mut file = File::open(file_path.clone())?;
         let mut content = String::new();
@@ -290,10 +302,14 @@ impl ContractGenerator {
             .map(|(name, _)| name.to_string())
             .collect::<Vec<String>>()
             .join(", ");
-
+        let function_arguments = if function_arguments.is_empty() {
+            "".to_string()
+        } else {
+            format!(", {}", function_arguments)
+        };
         let content = format!(
             "function callLambda( 
-            address lambdaAddress, 
+            address lambdaAddress
             {} 
         ) public preExecutionChecks async {{ 
             Lambda lambda = Lambda(lambdaAddress); 
