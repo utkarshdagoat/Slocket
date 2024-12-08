@@ -5,13 +5,18 @@ use crate::{AppState, CompileInput, CompileOutput};
 
 pub mod write_lambda;
 
-pub async fn compile_lambda(data: web::Data<AppState>, lambda: web::Json<CompileInput>) -> HttpResponse {
+pub async fn compile_lambda(
+    data: web::Data<AppState>,
+    lambda: web::Json<CompileInput>,
+) -> HttpResponse {
     let lambda_dir = lambda.0.dirname;
     match get_contract_bytecode(lambda_dir) {
-        Ok((appgateway_bytecode, deployer_bytecode)) => {
+        Ok((appgateway_bytecode, appgateway_abi, deployer_bytecode, deployer_abi)) => {
             return HttpResponse::Ok().json(CompileOutput {
                 appgateway_bytecode,
                 deployer_bytecode,
+                appgateway_abi,
+                deployer_abi,
             })
         }
         Err(e) => {

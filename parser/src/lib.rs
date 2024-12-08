@@ -250,7 +250,6 @@ impl ContractGenerator {
 
     pub fn write_apg(&self, dir: String) -> Result<(), Box<dyn Error>> {
         let final_path = format!("output/{}", dir);
-        println!("final_path: {:?}", final_path);
         let file_path = lambda_apg_file(&final_path);
         let mut file = File::open(file_path.clone())?;
         let mut content = String::new();
@@ -409,7 +408,6 @@ mod tests {
 
         generator.process_lambda(function)?;
 
-        println!("{:?}", generator.lambda_apg_content());
 
         // Check mapping types
         if let Some(PrimitiveSolidityType::Mapping { key, value }) =

@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
 mod handlers;
+mod indexers;
+mod metrics;
+mod db;
 
 #[derive(Deserialize)]
 struct LambdaInput {
@@ -22,6 +25,8 @@ struct CompileInput {
 struct CompileOutput {
     appgateway_bytecode: String,
     deployer_bytecode: String,
+    appgateway_abi: serde_json::Value,
+    deployer_abi: serde_json::Value,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -57,7 +62,7 @@ async fn main() -> std::io::Result<()> {
             .route("/handle-lambda", web::post().to(handle_lambda))
             .route("/compile", web::post().to(compile_lambda))
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

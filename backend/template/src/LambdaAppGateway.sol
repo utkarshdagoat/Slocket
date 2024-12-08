@@ -8,9 +8,16 @@ contract LambdaAppGateway is AppGatewayBase {
     constructor(
         address _addressResolver,
         address deployerContract_,
-        FeesData memory feesData_
+        address token,
+        uint32 feePoolChain,
+        uint256 maxFees
     ) AppGatewayBase(_addressResolver) {
         addressResolver.setContractsToGateways(deployerContract_);
+        FeesData memory feesData_ = FeesData({
+            feePoolChain: feePoolChain,
+            feePoolToken: token,
+            maxFees: maxFees
+        });
         _setFeesData(feesData_);
     }
 

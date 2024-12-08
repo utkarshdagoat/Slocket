@@ -9,9 +9,16 @@ contract LambdaDeployer is AppDeployerBase {
 
     constructor(
         address addressResolver_,
-        FeesData memory feesData_
+        address token,
+        uint32 feePoolChain,
+        uint256 maxFees
     ) AppDeployerBase(addressResolver_) {
         creationCodeWithArgs[lambda] = type(Lambda).creationCode;
+        FeesData memory feesData_ = FeesData({
+            feePoolChain: feePoolChain,
+            feePoolToken: token,
+            maxFees: maxFees
+        });
         _setFeesData(feesData_);
     }
 
